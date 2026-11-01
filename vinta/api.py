@@ -1,25 +1,15 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from dotenv import load_dotenv
 from .core import Profile, Request, Response, Vinta
 
 load_dotenv()
-app = FastAPI(title='Vinta API', version='0.1.0')
-@app.get("/")
-def home():
-    return {
-        "agent": "Vinta",
-        "version": "0.1.0",
-        "system": "Ara OS 12",
-        "status": "online",
-        "description": "Agente de Comunicação e Linguagem",
-        "documentation": "/docs"
-    }
+app = FastAPI(title='Vinta API', version='0.2.0')
 agent = Vinta()
 
 
 @app.get('/health')
 def health():
-    return {'status': 'ok', 'agent': 'Vinta', 'version': '0.1.0'}
+    return {'status': 'ok', 'agent': 'Vinta', 'version': '0.2.0'}
 
 
 @app.get('/profiles/{user_id}', response_model=Profile)
@@ -36,5 +26,10 @@ def put_profile(user_id: str, profile: Profile):
 
 
 @app.post('/process', response_model=Response)
-def process(request: Request):
-    return agent.process(request)
+def process(request: Request, x_openai_api_key: str | None = Header(default=None)):
+    if not x_openai_api_key:
+        raise HTTPException(status_code=401, detail="Informe X-OpenAI-API-Key com sua própria chave")
+    try:
+        return agent.process(request, api_key=x_openai_api_key)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error

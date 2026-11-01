@@ -52,7 +52,7 @@ class Vinta:
         tmp.replace(self.storage)
         return profile
 
-    def process(self, request: Request) -> Response:
+    def process(self, request: Request, api_key: str) -> Response:
         profile = self.get_profile(request.user_id)
         tasks = {
             'write': 'Escreva o conteúdo solicitado.',
@@ -71,7 +71,9 @@ class Vinta:
             'Não invente dados; quando faltar contexto, sinalize a limitação. '
             'Respeite a intenção do usuário e responda apenas com o resultado.'
         )
-        client = OpenAI()
+        if not api_key or not api_key.strip():
+            raise ValueError("Forneça sua própria chave de API")
+        client = OpenAI(api_key=api_key.strip())
         completion = client.chat.completions.create(
             model=self.model,
             messages=[

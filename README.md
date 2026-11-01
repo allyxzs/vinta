@@ -1,45 +1,34 @@
-# Vinta v0.1 — Ara OS 12
+# Vinta v0.2 — BYOK (Bring Your Own Key)
 
-Agente de comunicação e linguagem com escrita, resumo, tradução, revisão, adaptação de estilo e chat.
+Cada pessoa usa sua própria chave de API. **Não existe chave do desenvolvedor no projeto.**
 
-## Instalação (Kali Linux / Linux)
-
+## Kali Linux
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env
+python -m uvicorn vinta.api:app --host 127.0.0.1 --port 8000
 ```
 
-Edite `.env` e configure `OPENAI_API_KEY` com uma chave válida. O modelo pode ser alterado em `VINTA_MODEL`.
-
-## Executar API
-
+## API local
+Abra http://127.0.0.1:8000/docs e teste POST /process com o cabeçalho `X-OpenAI-API-Key` contendo **sua** chave. Exemplo:
 ```bash
-uvicorn vinta.api:app --host 127.0.0.1 --port 8000
-```
-
-Documentação interativa: http://127.0.0.1:8000/docs
-
-### Exemplos
-
-```bash
-curl http://127.0.0.1:8000/health
-curl -X PUT http://127.0.0.1:8000/profiles/allyxzs -H 'Content-Type: application/json' -d '{"language":"pt-BR","tone":"profissional e objetivo","audience":"desenvolvedores"}'
-curl -X POST http://127.0.0.1:8000/process -H 'Content-Type: application/json' -d '{"action":"summarize","text":"Este é um texto longo para resumir.","user_id":"allyxzs"}'
+curl -X POST http://127.0.0.1:8000/process \
+ -H 'Content-Type: application/json' \
+ -H "X-OpenAI-API-Key: $OPENAI_API_KEY" \
+ -d '{"action":"translate","text":"Olá, mundo!","target_language":"en"}'
 ```
 
 ## Terminal
-
 ```bash
 python -m vinta.cli translate 'Olá, mundo!' --target-language en
-python -m vinta.cli rewrite 'nóis vai amanhã'
 ```
+Se não existir `OPENAI_API_KEY` no ambiente, o terminal solicita a chave sem mostrá-la.
 
-## Segurança e limitações
-
-- Não publique `.env` ou chaves de API no GitHub.
-- O servidor deve permanecer local por padrão; antes de expor na internet, adicione autenticação, limites de uso e proteção de dados.
-- Perfis ficam em arquivo JSON local; não é armazenamento multiusuário concorrente.
-- Chamadas ao modelo exigem rede, credenciais válidas e podem gerar custos.
-- Esta versão não inclui memória conversacional persistente, tradução offline ou integração direta com outros agentes.
+## Segurança
+- Não inclua chaves no código, GitHub ou logs.
+- Execute somente em localhost; esta API **não é segura para exposição pública**: não possui autenticação de usuários, limites de requisição ou isolamento de perfis.
+- O cabeçalho de API deve trafegar apenas via HTTPS em uma implantação futura.
+- A chave é usada por requisição e não é salva pelo Vinta.
+- O provedor cobra a conta associada à chave fornecida.
+- Para implantação pública, implementar autenticação, controle de acesso aos perfis, limites e HTTPS.

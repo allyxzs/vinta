@@ -1,4 +1,6 @@
 import argparse
+import os
+import getpass
 from dotenv import load_dotenv
 from .core import Request, Vinta
 
@@ -12,7 +14,8 @@ def main():
     parser.add_argument('--user-id', default='default')
     parser.add_argument('--instructions')
     args = parser.parse_args()
-    result = Vinta().process(Request(action=args.action, text=args.text, user_id=args.user_id, target_language=args.target_language, instructions=args.instructions))
+    key = os.getenv("OPENAI_API_KEY") or getpass.getpass("Sua chave de API (não será exibida): ")
+    result = Vinta().process(Request(action=args.action, text=args.text, user_id=args.user_id, target_language=args.target_language, instructions=args.instructions), api_key=key)
     print(result.result)
 
 
