@@ -1,34 +1,70 @@
-# Vinta v0.2 — BYOK (Bring Your Own Key)
+# ⚡ Vinta Pro Enterprise (v2.0)
 
-Cada pessoa usa sua própria chave de API. **Não existe chave do desenvolvedor no projeto.**
+Uma evolução arquitetural completa e pronta para produção do agente **Vinta** (`allyxzs/vinta`), projetada com **Orquestração Multi-Agente baseada em Grafos (DAG)**, **Memória Vetorial Híbrida (RAG)**, **Sandbox de Execução Segura**, **Fallback Multi-LLM** e **Observabilidade em Tempo Real**.
 
-## Kali Linux
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python -m uvicorn vinta.api:app --host 127.0.0.1 --port 8000
+---
+
+## 🏗️ O que mudou nesta versão mais complexa?
+
+| Dimensão | Vinta Original | Vinta Pro Enterprise (v2.0) |
+| :--- | :--- | :--- |
+| **Arquitetura Cognitiva** | Loop linear simples de prompt/resposta | **Orquestrador Multi-Agente DAG** (`Planner`, `Researcher`, `Coder`, `Critic`, `Synthesizer`) |
+| **Controle de Qualidade** | Sem verificação pós-etapa | **Loop de Auto-Reflexão (Critic Agent)** com score de aprovação e replanejamento automático |
+| **Sistema de Memória** | Contexto efêmero em memória | **Memória Híbrida (Curto Prazo + Banco Vetorial Semântico + Busca Lexical BM25-lite)** |
+| **Provedores de IA** | Único provedor acoplado | **Roteador Multi-LLM com Fallback Automático** (OpenAI, Anthropic Claude, Ollama Local e Motor Determinístico Offline) |
+| **Execução de Ferramentas** | Chamadas diretas sem validação | **Tool Registry tipado com Zod** + **Sandbox isolado (`node:vm`)** com controle de timeout |
+| **Interfaces & Operação** | Script local | **Servidor REST API + Streaming WebSocket + Dashboard Web Tailwind + CLI Interativa** |
+| **DevOps & Publicação** | Sem empacotamento de infraestrutura | **Dockerfile multi-stage, Docker Compose (Redis + Prometheus), Testes e GitHub Actions CI/CD** |
+
+---
+
+## 📂 Estrutura do Projeto
+
+```text
+vinta-pro-agent/
+├── .github/workflows/ci-publish.yml  # Pipeline CI/CD para build, testes e publicação
+├── public/index.html                 # Dashboard Web em tempo real (Socket.IO + Tailwind)
+├── src/
+│   ├── api/server.ts                 # API RESTful + Streaming WebSocket + Endpoint /metrics
+│   ├── cli/index.ts                  # Interface de Linha de Comando (CLI) interativa
+│   ├── config/env.ts                 # Validação rigorosa de variáveis de ambiente com Zod
+│   ├── core/orchestrator.ts          # Motor Multi-Agente DAG + Loop de Auto-Reflexão
+│   ├── llm/provider.router.ts        # Roteador Multi-LLM (OpenAI, Anthropic, Ollama, Offline)
+│   ├── memory/hybrid.memory.ts       # Memória Episódica e Vetorial Híbrida (Cosine + Lexical)
+│   ├── telemetry/                    # Logger estruturado (Pino) e Métricas Prometheus
+│   ├── tools/registry.ts             # Registro de ferramentas com Sandbox VM e Workspace seguro
+│   ├── types/agent.types.ts          # Contratos e interfaces TypeScript
+│   └── index.ts                      # Entrypoint principal do servidor
+├── tests/orchestrator.test.ts        # Suíte de testes automatizados
+├── Dockerfile                        # Build multi-stage otimizado para produção
+├── docker-compose.yml                # Stack completa: Agente + Redis + Prometheus
+├── prometheus.yml                    # Configuração de coleta de telemetria
+├── package.json                      # Dependências e scripts de publicação
+└── tsconfig.json                     # Configuração TypeScript Strict Mode
 ```
 
-## API local
-Abra http://127.0.0.1:8000/docs e teste POST /process com o cabeçalho `X-OpenAI-API-Key` contendo **sua** chave. Exemplo:
+---
+
+## 🚀 Como Executar e Publicar
+
+### 1. Instalação Local Rápida
 ```bash
-curl -X POST http://127.0.0.1:8000/process \
- -H 'Content-Type: application/json' \
- -H "X-OpenAI-API-Key: $OPENAI_API_KEY" \
- -d '{"action":"translate","text":"Olá, mundo!","target_language":"en"}'
+npm install
+cp .env.example .env
+# O agente funciona mesmo sem chaves de API configuradas graças ao motor determinístico integrado!
+npm run dev
+```
+Acesse o **Control Center Web** em `http://localhost:3000`.
+
+### 2. Uso via CLI
+```bash
+npm run cli -- run "Analisar performance do servidor, validar script em sandbox e gerar plano de ação"
 ```
 
-## Terminal
+### 3. Deploy em Produção com Docker Compose
 ```bash
-python -m vinta.cli translate 'Olá, mundo!' --target-language en
+docker-compose up --build -d
 ```
-Se não existir `OPENAI_API_KEY` no ambiente, o terminal solicita a chave sem mostrá-la.
-
-## Segurança
-- Não inclua chaves no código, GitHub ou logs.
-- Execute somente em localhost; esta API **não é segura para exposição pública**: não possui autenticação de usuários, limites de requisição ou isolamento de perfis.
-- O cabeçalho de API deve trafegar apenas via HTTPS em uma implantação futura.
-- A chave é usada por requisição e não é salva pelo Vinta.
-- O provedor cobra a conta associada à chave fornecida.
-- Para implantação pública, implementar autenticação, controle de acesso aos perfis, limites e HTTPS.
+- **API & Painel Web**: `http://localhost:3000`
+- **Métricas Prometheus**: `http://localhost:3000/metrics`
+- **Servidor Prometheus**: `http://localhost:9090`

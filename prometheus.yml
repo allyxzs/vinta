@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'vinta-pro-agent'
+    static_configs:
+      - targets: ['vinta-agent:3000']

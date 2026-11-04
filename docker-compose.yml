@@ -1,0 +1,38 @@
+version: '3.9'
+
+services:
+  vinta-agent:
+    build: .
+    container_name: vinta-pro-core
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - vinta_data:/app/data
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: vinta-pro-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: vinta-pro-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+volumes:
+  vinta_data:
+  redis_data:
