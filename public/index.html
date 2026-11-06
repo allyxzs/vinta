@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vinta 3 — Autonomous Parallel DAG Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
+  <header class="border-b border-slate-800 bg-slate-900/70 backdrop-blur px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-3 h-3 rounded-full bg-cyan-400 animate-ping"></div>
+      <h1 class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent">
+        VINTA 3
+      </h1>
+      <span class="text-xs font-mono bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 px-2.5 py-0.5 rounded-full">
+        v3.0 Parallel DAG + BYOK + Security Guardrails
+      </span>
+    </div>
+    <div class="text-xs text-slate-400 font-mono">
+      Planner • Researcher • Security Auditor • Coder • Critic
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Painel de Missão & BYOK -->
+    <section class="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col gap-4">
+      <h2 class="text-xs font-bold uppercase tracking-wider text-cyan-400">1. Missão Autônoma</h2>
+      <textarea
+        id="goalInput"
+        rows="4"
+        class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-slate-100 focus:outline-none focus:border-cyan-500"
+      >Executar auditoria de segurança, diagnosticar recursos de hardware e validar código em sandbox isolado.</textarea>
+
+      <div class="border-t border-slate-800 pt-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">2. BYOK (Bring Your Own Key - Opcional)</h3>
+        <select id="providerSelect" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs mb-2">
+          <option value="mock">Motor Determinístico Local (Offline / Instantâneo)</option>
+          <option value="openai">OpenAI (GPT-4o)</option>
+          <option value="anthropic">Anthropic (Claude 3.5 Sonnet)</option>
+          <option value="gemini">Google Gemini (2.5 Flash)</option>
+        </select>
+        <input id="apiKeyInput" type="password" placeholder="Cole sua API Key (opcional)..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs" />
+      </div>
+
+      <button
+        id="runBtn"
+        class="w-full bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 transition font-bold py-2.5 px-4 rounded-lg text-sm shadow-lg shadow-cyan-600/20"
+      >
+        Disparar Ondas Paralelas Vinta 3
+      </button>
+
+      <div class="border-t border-slate-800 pt-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">3. Memória Vetorial Híbrida (RAG)</h3>
+        <input id="memInput" type="text" placeholder="Indexar novo conhecimento semântico..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs mb-2" />
+        <button id="memBtn" class="w-full bg-slate-800 hover:bg-slate-700 text-xs py-2 rounded-lg font-medium">Indexar na Memória Vinta 3</button>
+      </div>
+    </section>
+
+    <!-- Telemetria em Tempo Real -->
+    <section class="lg:col-span-2 flex flex-col gap-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-3">Telemetria de Ondas DAG & Guardrails (WebSocket)</h2>
+        <div id="eventsLog" class="bg-slate-950 border border-slate-800 rounded-lg p-4 h-64 overflow-y-auto font-mono text-xs space-y-2">
+          <div class="text-slate-500">Vinta 3 pronto para receber missão...</div>
+        </div>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-3">Relatório Consolidado Vinta 3</h2>
+        <pre id="finalOutput" class="bg-slate-950 border border-slate-800 rounded-lg p-4 text-xs text-slate-200 whitespace-pre-wrap min-h-[160px]">Nenhuma execução iniciada.</pre>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const socket = io();
+    const eventsLog = document.getElementById('eventsLog');
+    const finalOutput = document.getElementById('finalOutput');
+    const runBtn = document.getElementById('runBtn');
+    const goalInput = document.getElementById('goalInput');
+    const providerSelect = document.getElementById('providerSelect');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const memBtn = document.getElementById('memBtn');
+    const memInput = document.getElementById('memInput');
+
+    function appendLog(badge, text, color = 'text-cyan-400') {
+      const div = document.createElement('div');
+      const time = new Date().toLocaleTimeString();
+      div.innerHTML = `<span class="text-slate-600">[${time}]</span> <span class="${color} font-bold">[${badge}]</span> <span>${text}</span>`;
+      eventsLog.appendChild(div);
+      eventsLog.scrollTop = eventsLog.scrollHeight;
+    }
+
+    socket.on('agent_event', (ev) => {
+      if (ev.type === 'guardrail_checked') {
+        appendLog('GUARDRAIL', `Segurança verificada (Safe: ${ev.payload.safe})`, 'text-teal-400');
+      } else if (ev.type === 'plan_created') {
+        appendLog('PLANNER', `Grafo Vinta 3 gerado com ${ev.payload.plan.steps.length} nós.`, 'text-amber-400');
+      } else if (ev.type === 'wave_started') {
+        appendLog('WAVE', `Disparando Onda Paralela #${ev.payload.waveNumber}: [${ev.payload.stepIds.join(', ')}]`, 'text-fuchsia-400');
+      } else if (ev.type === 'step_started') {
+        appendLog('AGENT', `Sub-agente ${ev.payload.step.assignedRole.toUpperCase()} executando "${ev.payload.step.title}"`, 'text-sky-400');
+      } else if (ev.type === 'tool_invoked') {
+        appendLog('TOOL', `Acionando ${ev.payload.toolName}...`, 'text-indigo-400');
+      } else if (ev.type === 'critic_review') {
+        appendLog('CRITIC', `Etapa ${ev.payload.stepId} aprovada com Score ${ev.payload.score}`, 'text-emerald-400');
+      } else if (ev.type === 'task_completed') {
+        appendLog('COMPLETE', `Missão finalizada em ${ev.payload.totalDurationMs}ms!`, 'text-emerald-300');
+        finalOutput.textContent = ev.payload.finalOutput;
+      }
+    });
+
+    runBtn.addEventListener('click', () => {
+      const goal = goalInput.value.trim();
+      if (!goal) return;
+      eventsLog.innerHTML = '';
+      finalOutput.textContent = 'Executando ondas paralelas DAG...';
+
+      const provider = providerSelect.value;
+      const key = apiKeyInput.value.trim();
+      const byok = { preferredProvider: provider };
+      if (key) {
+        if (provider === 'openai') byok.openaiApiKey = key;
+        if (provider === 'anthropic') byok.anthropicApiKey = key;
+        if (provider === 'gemini') byok.geminiApiKey = key;
+      }
+
+      socket.emit('run_goal', { goal, byok });
+    });
+
+    memBtn.addEventListener('click', async () => {
+      const content = memInput.value.trim();
+      if (!content) return;
+      await fetch('/api/v1/memory/ingest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, tags: ['vinta3_ui'] })
+      });
+      memInput.value = '';
+      appendLog('RAG', `Fato indexado no banco vetorial: "${content}"`, 'text-emerald-400');
+    });
+  </script>
+</body>
+</html>

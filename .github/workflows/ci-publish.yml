@@ -1,0 +1,38 @@
+name: Vinta 3 CI & Quality Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    name: Build, Typecheck & Test (Node 20)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Clean Legacy Subfolders (if any)
+        run: rm -rf ./vinta
+
+      - name: Install Dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: TypeScript Strict Typecheck
+        run: npm run typecheck
+
+      - name: Compile Production Bundle
+        run: npm run build
+
+      - name: Run Jest Automated Test Suite
+        run: npm test
+        env:
+          NODE_ENV: test
+          DEFAULT_MODEL_PROVIDER: mock
